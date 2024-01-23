@@ -1,0 +1,1 @@
+add_subdirectory_ifdef(CONFIG_VEML7700 veml7700)

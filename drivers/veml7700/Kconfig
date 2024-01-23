@@ -1,0 +1,3 @@
+config VEML7700
+    bool "Enable VEML7700 lux sensor"
+    depends on I2C

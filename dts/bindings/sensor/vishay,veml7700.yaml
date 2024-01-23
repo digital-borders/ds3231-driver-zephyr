@@ -1,0 +1,5 @@
+description: |
+  VEML7700 16-bit ambient light sensor
+
+compatible: "vishay,veml7700"
+include: [base.yaml, i2c-device.yaml]

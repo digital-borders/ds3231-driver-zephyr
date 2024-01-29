@@ -1,1 +1,1 @@
-add_subdirectory_ifdef(CONFIG_VEML7700 veml7700)
+add_subdirectory_ifdef(CONFIG_DS3231 ds3231)

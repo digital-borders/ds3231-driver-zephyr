@@ -1,1 +1,1 @@
-rsource "veml7700/Kconfig"
+rsource "ds3231/Kconfig"

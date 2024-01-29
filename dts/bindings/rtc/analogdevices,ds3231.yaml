@@ -1,0 +1,5 @@
+description: |
+  DS3231 as a RTC device
+
+compatible: "analogdevices,ds3231"
+include: [base.yaml, i2c-device.yaml]

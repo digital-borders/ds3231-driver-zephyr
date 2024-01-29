@@ -21,4 +21,4 @@ manifest:
           - hal_rpi_pico
 
   self:
-    path: veml7700tr-driver-zephyr
+    path: ds3231-driver-zephyr

@@ -1,0 +1,24 @@
+&pinctrl {	
+ i2c1_default: i2c1_default {
+		group1 {
+			pinmux = <I2C1_SDA_P2>, <I2C1_SCL_P3>;
+			input-enable;
+			input-schmitt-enable;
+		};
+};
+
+&i2c1{
+	clock-frequency = <I2C_BITRATE_FAST>;
+	status = "okay";
+	pinctrl-0 = <&i2c1_default>;
+	pinctrl-names = "default";
+ ds3231:ds3231@68{
+		compatible = "analogdevices,ds3231";
+		status = "okay";
+		reg = <0x68>;
+		int1-gpios = <&gpio0 6 GPIO_ACTIVE_LOW>;
+		battery-switch-over = "standard";
+		alarms-count = <1>;
+	};
+ };
+		

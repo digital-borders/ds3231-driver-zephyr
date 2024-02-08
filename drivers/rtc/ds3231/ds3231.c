@@ -216,7 +216,17 @@ static const struct rtc_driver_api ds3231_driver_api = {
 
 static int ds3231_init(const struct device* dev)
 {
-	
+	const struct ds3231_config *config = dev->config;
+	struct ds3231_data *data = dev->data;
+	/* uint8_t regs[3]; */
+	/* int err; */
+	LOG_INF("Initializing the ds3231 driver");
+	if (!i2c_is_ready_dt(&config->i2c)) {
+		LOG_ERR("I2C bus not ready");
+		return -ENODEV;
+	}
+	return 0;
+
 }
 
 #define DS3231_INIT(inst)                                                                          \

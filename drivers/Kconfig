@@ -1,1 +1,3 @@
-rsource "ds3231/Kconfig"
+menu "Drivers"
+rsource "rtc/Kconfig"
+endmenu

@@ -1,1 +1,1 @@
-vishay	Vishay Semiconductors
+analogdevices	Analog Devices

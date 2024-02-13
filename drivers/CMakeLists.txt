@@ -1,1 +1,4 @@
-add_subdirectory_ifdef(CONFIG_DS3231 rtc)
+# Copyright (c) 2024 Arribada Initiative CIC
+# SPDX-License-Identifier: MIT
+
+add_subdirectory(rtc)

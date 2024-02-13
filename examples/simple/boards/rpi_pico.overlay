@@ -17,9 +17,5 @@
 		compatible = "analogdevices,ds3231";
 		status = "okay";
 		reg = <0x68>;
-		/* int1-gpios = <&gpio0 6 GPIO_ACTIVE_LOW>; */
-		/* battery-switch-over = "standard"; */
-		/* alarms-count = <2>; */
 	};
  };
-		

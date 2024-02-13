@@ -1,3 +1,0 @@
-config DS3231
-    bool "Enable DS3231 as a RTC"
-    default y

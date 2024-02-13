@@ -1,0 +1,5 @@
+config RTC_DS3231
+       bool "DS3231 RTC driver"
+       default y
+       depends on DT_HAS_ANALOGDEVICES_DS3231_ENABLED
+       select I2C

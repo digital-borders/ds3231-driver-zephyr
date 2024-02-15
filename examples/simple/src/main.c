@@ -34,7 +34,10 @@ int main(void)
 		return 0;
 	}
 	struct rtc_time get_t;
-	rtc_get_time(dev, &get_t);
-	LOG_INF("Current date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900, get_t.tm_mon + 1, get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
+	while(1){
+		rtc_get_time(dev, &get_t);
+		LOG_INF("Current date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900, get_t.tm_mon + 1, get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
+		k_msleep(2000);
+	}
 	return 0;
 }

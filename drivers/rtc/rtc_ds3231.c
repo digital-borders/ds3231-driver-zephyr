@@ -170,39 +170,22 @@ static int ds3231_write_reg8(const struct device *dev, uint8_t addr, uint8_t val
 {
 	return ds3231_write_regs(dev, addr, &val, sizeof(val));
 }
-
 static int ds3231_get_time(const struct device *dev, struct rtc_time *timeptr)
 {
-	uint8_t regs[10];
+	uint8_t regs[7];
 	int err;
-
-	/* Read registers DS3231_CONTROL_1 through DS3231_YEARS */
-	/* err = ds3231_read_regs(dev, DS3231_CONTROL_1, &regs, sizeof(regs)); */
-	/* if (err != 0) { */
-	/* 	return err; */
-	/* } */
-
-	/* if ((regs[0] & DS3231_CONTROL_1_STOP) != 0) { */
-	/* 	LOG_WRN("time circuits frozen"); */
-	/* 	return -ENODATA; */
-	/* } */
-
-	/* if ((regs[3] & DS3231_SECONDS_OS) != 0) { */
-	/* 	LOG_WRN("oscillator stopped or interrupted"); */
-	/* 	return -ENODATA; */
-	/* } */
-
+	err = ds3231_read_regs(dev,DS3231_SECONDS,&regs, sizeof(regs));
+	if (err!=0){
+		return err;
+	}
 	memset(timeptr, 0U, sizeof(*timeptr));
-	timeptr->tm_sec = bcd2bin(regs[3] & DS3231_SECONDS_MASK);
-	timeptr->tm_min = bcd2bin(regs[4] & DS3231_MINUTES_MASK);
-	timeptr->tm_hour = bcd2bin(regs[5] & DS3231_HOURS_MASK);
-	timeptr->tm_mday = bcd2bin(regs[6] & DS3231_DAYS_MASK);
-	timeptr->tm_wday = bcd2bin(regs[7] & DS3231_DAYS_MASK);
-	timeptr->tm_mon = bcd2bin(regs[8] & DS3231_MONTHS_MASK) - DS3231_MONTHS_OFFSET;
-	timeptr->tm_year = bcd2bin(regs[9] & DS3231_YEARS_MASK) + DS3231_YEARS_OFFSET;
-	timeptr->tm_yday = -1;
-	timeptr->tm_isdst = -1;
-
+	timeptr->tm_sec = bcd2bin(regs[0] & DS3231_SECONDS_MASK)+bcd2bin(regs[0] & DS3231_SECONDS_10);
+	timeptr->tm_min = bcd2bin(regs[1] & DS3231_MINUTES_MASK)+bcd2bin(regs[1] & DS3231_MINUTES_10);
+	timeptr->tm_hour = bcd2bin(regs[2] & DS3231_HOURS_MASK)+bcd2bin(regs[2] & DS3231_HOURS_10);
+	timeptr->tm_mday = bcd2bin(regs[3] & DS3231_DAYS_MASK);
+	timeptr->tm_wday = bcd2bin(regs[4] & DS3231_DATE_MASK);
+	timeptr->tm_mon = bcd2bin(regs[5] & DS3231_MONTHS_MASK) - DS3231_MONTHS_OFFSET;
+	timeptr->tm_year = bcd2bin(regs[6] & DS3231_YEARS_MASK) + DS3231_YEARS_OFFSET;
 	LOG_DBG("get time: year = %d, mon = %d, mday = %d, wday = %d, hour = %d, "
 		"min = %d, sec = %d",
 		timeptr->tm_year, timeptr->tm_mon, timeptr->tm_mday, timeptr->tm_wday,
@@ -210,6 +193,7 @@ static int ds3231_get_time(const struct device *dev, struct rtc_time *timeptr)
 
 	return 0;
 }
+
 static const struct rtc_driver_api ds3231_driver_api = {
 	.get_time = ds3231_get_time,
 };

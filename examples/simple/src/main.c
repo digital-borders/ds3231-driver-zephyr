@@ -87,7 +87,7 @@ int main(void)
 	if (dev == NULL) {
 		return 0;
 	}
-	struct rtc_time get_t;
+	/* struct rtc_time get_t; */
 	while (1) {
 		/* rtc_get_time(dev, &get_t); */
 		/* LOG_INF("Current date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900, */

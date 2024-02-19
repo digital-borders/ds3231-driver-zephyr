@@ -10,6 +10,13 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)                                                                       \
+	((byte) & 0x80 ? '1' : '0'), ((byte) & 0x40 ? '1' : '0'), ((byte) & 0x20 ? '1' : '0'),     \
+		((byte) & 0x10 ? '1' : '0'), ((byte) & 0x08 ? '1' : '0'),                          \
+		((byte) & 0x04 ? '1' : '0'), ((byte) & 0x02 ? '1' : '0'),                          \
+		((byte) & 0x01 ? '1' : '0')
+
 LOG_MODULE_REGISTER(ds3231, CONFIG_RTC_LOG_LEVEL);
 
 /* DS3231 register addresses */
@@ -53,9 +60,9 @@ LOG_MODULE_REGISTER(ds3231, CONFIG_RTC_LOG_LEVEL);
 #define DS3231_DATE_MASK               GENMASK(3, 0)
 #define DS3231_MONTH_CENTURY           BIT(7)
 #define DS3231_MONTH_10                BIT(4)
-#define DS3231_MONTHS_MASK              GENMASK(3, 0)
+#define DS3231_MONTHS_MASK             GENMASK(3, 0)
 #define DS3231_YEAR_10                 GENMASK(7, 4)
-#define DS3231_YEARS_MASK               GENMASK(3, 0)
+#define DS3231_YEARS_MASK              GENMASK(3, 0)
 #define DS3231_ALARM_1_SECONDS_A1M1    BIT(7)
 #define DS3231_ALARM_1_SECONDS_10      GENMASK(6, 4)
 #define DS3231_ALARM_1_SECONDS_SECONDS GENMASK(3, 0)
@@ -143,10 +150,10 @@ static int ds3231_read_regs(const struct device *dev, uint8_t addr, void *buf, s
 	return 0;
 }
 
-static int ds3231_read_reg8(const struct device *dev, uint8_t addr, uint8_t *val)
-{
-	return ds3231_read_regs(dev, addr, val, sizeof(*val));
-}
+/* static int ds3231_read_reg8(const struct device *dev, uint8_t addr, uint8_t *val) */
+/* { */
+/* 	return ds3231_read_regs(dev, addr, val, sizeof(*val)); */
+/* } */
 
 static int ds3231_write_regs(const struct device *dev, uint8_t addr, void *buf, size_t len)
 {
@@ -166,26 +173,60 @@ static int ds3231_write_regs(const struct device *dev, uint8_t addr, void *buf, 
 	return 0;
 }
 
-static int ds3231_write_reg8(const struct device *dev, uint8_t addr, uint8_t val)
+/* static int ds3231_write_reg8(const struct device *dev, uint8_t addr, uint8_t val) */
+/* { */
+/* 	return ds3231_write_regs(dev, addr, &val, sizeof(val)); */
+/* } */
+
+
+static int ds3231_set_time(const struct device *dev, const struct rtc_time *timeptr)
 {
-	return ds3231_write_regs(dev, addr, &val, sizeof(val));
+	int ret = 0;
+	uint8_t raw_time[7] = {0};
+
+	/* LOG_DBG("setting time: year = %d, mon = %d, mday = %d, wday = %d, hour = %d, " */
+	/*	"min = %d, sec = %d", */
+	/*	timeptr->tm_year, timeptr->tm_mon, timeptr->tm_mday, timeptr->tm_wday, */
+	/*	timeptr->tm_hour, timeptr->tm_min, timeptr->tm_sec); */
+
+	raw_time[0] = (bin2bcd(timeptr->tm_sec / 10) << 4) + bin2bcd(timeptr->tm_sec % 10);
+	raw_time[1] = (bin2bcd(timeptr->tm_min / 10) << 4) + bin2bcd(timeptr->tm_min % 10);
+	raw_time[2] = (bin2bcd(timeptr->tm_hour / 10) << 4) + bin2bcd(timeptr->tm_hour % 10);
+	raw_time[3] = bin2bcd(timeptr->tm_wday);
+	raw_time[4] = (bin2bcd(timeptr->tm_mday / 10) << 4) + bin2bcd(timeptr->tm_mday % 10);
+	raw_time[5] = bin2bcd(timeptr->tm_mon + DS3231_MONTHS_OFFSET) & DS3231_MONTHS_MASK;
+	raw_time[6] = bin2bcd(timeptr->tm_year - DS3231_YEARS_OFFSET);
+
+	ret = ds3231_write_regs(dev, DS3231_SECONDS, raw_time, sizeof(raw_time));
+	if (ret) {
+		LOG_ERR("Error when setting time: %i", ret);
+		return ret;
+	}
+
+	return 0;
 }
+
 static int ds3231_get_time(const struct device *dev, struct rtc_time *timeptr)
 {
 	uint8_t regs[7];
 	int err;
-	err = ds3231_read_regs(dev,DS3231_SECONDS,&regs, sizeof(regs));
-	if (err!=0){
+	err = ds3231_read_regs(dev, DS3231_SECONDS, &regs, sizeof(regs));
+	if (err != 0) {
 		return err;
 	}
 	memset(timeptr, 0U, sizeof(*timeptr));
-	timeptr->tm_sec = bcd2bin(regs[0] & DS3231_SECONDS_MASK)+bcd2bin(regs[0] & DS3231_SECONDS_10);
-	timeptr->tm_min = bcd2bin(regs[1] & DS3231_MINUTES_MASK)+bcd2bin(regs[1] & DS3231_MINUTES_10);
-	timeptr->tm_hour = bcd2bin(regs[2] & DS3231_HOURS_MASK)+bcd2bin(regs[2] & DS3231_HOURS_10);
-	timeptr->tm_mday = bcd2bin(regs[3] & DS3231_DAYS_MASK);
-	timeptr->tm_wday = bcd2bin(regs[4] & DS3231_DATE_MASK);
-	timeptr->tm_mon = bcd2bin(regs[5] & DS3231_MONTHS_MASK) - DS3231_MONTHS_OFFSET;
-	timeptr->tm_year = bcd2bin(regs[6] & DS3231_YEARS_MASK) + DS3231_YEARS_OFFSET;
+	timeptr->tm_sec =
+		bcd2bin(regs[0] & DS3231_SECONDS_MASK) + bcd2bin(regs[0] & DS3231_SECONDS_10);
+	timeptr->tm_min =
+		bcd2bin(regs[1] & DS3231_MINUTES_MASK) + bcd2bin(regs[1] & DS3231_MINUTES_10);
+	timeptr->tm_hour =
+		bcd2bin(regs[2] & DS3231_HOURS_MASK) + bcd2bin(regs[2] & DS3231_HOURS_10);
+	timeptr->tm_wday = bcd2bin(regs[3] & DS3231_DAYS_MASK);
+	timeptr->tm_mday = bcd2bin(regs[4] & DS3231_DATE_MASK) + bcd2bin(regs[4] & DS3231_DATE_10);
+	timeptr->tm_mon = bcd2bin(regs[5] & DS3231_MONTHS_MASK) +
+			  bcd2bin(regs[5] & DS3231_MONTH_10) - DS3231_MONTHS_OFFSET;
+	timeptr->tm_year = bcd2bin(regs[6] & DS3231_YEARS_MASK) +
+			   bcd2bin(regs[6] & DS3231_YEAR_10) + DS3231_YEARS_OFFSET;
 	LOG_DBG("get time: year = %d, mon = %d, mday = %d, wday = %d, hour = %d, "
 		"min = %d, sec = %d",
 		timeptr->tm_year, timeptr->tm_mon, timeptr->tm_mday, timeptr->tm_wday,
@@ -195,22 +236,21 @@ static int ds3231_get_time(const struct device *dev, struct rtc_time *timeptr)
 }
 
 static const struct rtc_driver_api ds3231_driver_api = {
+	.set_time = ds3231_set_time,
 	.get_time = ds3231_get_time,
+
 };
 
-static int ds3231_init(const struct device* dev)
+static int ds3231_init(const struct device *dev)
 {
 	const struct ds3231_config *config = dev->config;
-	struct ds3231_data *data = dev->data;
-	/* uint8_t regs[3]; */
-	/* int err; */
+	/* struct ds3231_data *data = dev->data; */
 	LOG_INF("Initializing the ds3231 driver");
 	if (!i2c_is_ready_dt(&config->i2c)) {
 		LOG_ERR("I2C bus not ready");
 		return -ENODEV;
 	}
 	return 0;
-
 }
 
 #define DS3231_INIT(inst)                                                                          \

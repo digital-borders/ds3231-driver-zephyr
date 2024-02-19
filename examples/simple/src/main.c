@@ -15,13 +15,18 @@ static int cmd_g_arribada_rtc_set(const struct shell *shell, size_t argc, char *
 	time_t timer_set = atoi(argv[1]);
 	struct rtc_time set_t;
 	gmtime_r(&timer_set, (struct tm *)(&set_t));
-	LOG_INF("Setting date/time is %d-%d-%d   %d:%d:%d\n", set_t.tm_year + 1900,
-		set_t.tm_mon + 1, set_t.tm_mday, set_t.tm_hour, set_t.tm_min, set_t.tm_sec);
+	LOG_INF("Setting date/time is %d-%d-%d %d  %d:%d:%d\n", set_t.tm_year + 1900,
+		set_t.tm_mon + 1, set_t.tm_mday, set_t.tm_wday, set_t.tm_hour, set_t.tm_min, set_t.tm_sec);
 
 	int ret = rtc_set_time(dev, &set_t);
 	if (ret != 0) {
 		LOG_INF("Error setting time!!");
 	}
+
+	struct rtc_time get_t;
+	rtc_get_time(dev, &get_t);
+	LOG_INF("Date/time is %d-%d-%d %d  %d:%d:%d\n", get_t.tm_year + 1900,
+		get_t.tm_mon + 1, get_t.tm_mday,get_t.tm_wday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
 
 	return 0;
 }
@@ -84,9 +89,9 @@ int main(void)
 	}
 	struct rtc_time get_t;
 	while (1) {
-		rtc_get_time(dev, &get_t);
-		LOG_INF("Current date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900,
-			get_t.tm_mon + 1, get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
+		/* rtc_get_time(dev, &get_t); */
+		/* LOG_INF("Current date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900, */
+		/* 	get_t.tm_mon + 1, get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec); */
 		k_msleep(2000);
 	}
 	return 0;

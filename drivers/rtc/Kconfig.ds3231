@@ -3,3 +3,18 @@ config RTC_DS3231
        default y
        depends on DT_HAS_ANALOGDEVICES_DS3231_ENABLED
        select I2C
+
+if RTC_ALARM || RTC_UPDATE
+config RTC_DS3231_THREAD_STACK_SIZE
+	int "Stack size for the DS3231 interrupt thread"
+	default 512
+	help
+	  Size of the stack used for the thread handling interrupts and dispatching callbacks.
+
+config RTC_DS3231_THREAD_PRIO
+	int "Priority for the DS3231 interrupt thread"
+	default 0
+	help
+	  Priority level for the thread handling interrupts and dispatching callbacks.
+
+endif # RTC_ALARM || RTC_UPDATE

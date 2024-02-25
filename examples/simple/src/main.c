@@ -10,13 +10,41 @@
 LOG_MODULE_REGISTER(simple_app);
 const struct device *dev;
 
+static int cmd_g_arribada_rtc_alarm(const struct shell *shell, size_t argc, char *argv[])
+{
+	int ret;
+	/* Print current time in RTC */
+	struct rtc_time get_t;
+	rtc_get_time(dev, &get_t);
+	LOG_INF("Current date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900,
+		get_t.tm_mon + 1, get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
+
+	/* Convert input epoch to timer struct */
+	time_t timer_set = atoi(argv[1]);
+	struct rtc_time set_t;
+	gmtime_r(&timer_set, (struct tm *)(&set_t));
+	LOG_INF("Setting alarm %d to %d-%d-%d %d  %d:%d:%d\n", atoi(argv[2]), set_t.tm_year + 1900,
+		set_t.tm_mon + 1, set_t.tm_mday, set_t.tm_wday, set_t.tm_hour, set_t.tm_min,
+		set_t.tm_sec);
+
+	uint16_t alarm_time_mask_supported, alarm_time_mask_set;
+	/* Get alarms supported fields */
+	ret = rtc_alarm_get_supported_fields(dev, atoi(argv[2]), &alarm_time_mask_supported);
+	LOG_INF("Supported alarm fields are %d", alarm_time_mask_supported);
+	/* Set alarm */
+	ret = rtc_alarm_set_time(dev, atoi(argv[2]), alarm_time_mask_set, &set_t);
+
+	return 0;
+}
+
 static int cmd_g_arribada_rtc_set(const struct shell *shell, size_t argc, char *argv[])
 {
 	time_t timer_set = atoi(argv[1]);
 	struct rtc_time set_t;
 	gmtime_r(&timer_set, (struct tm *)(&set_t));
 	LOG_INF("Setting date/time is %d-%d-%d %d  %d:%d:%d\n", set_t.tm_year + 1900,
-		set_t.tm_mon + 1, set_t.tm_mday, set_t.tm_wday, set_t.tm_hour, set_t.tm_min, set_t.tm_sec);
+		set_t.tm_mon + 1, set_t.tm_mday, set_t.tm_wday, set_t.tm_hour, set_t.tm_min,
+		set_t.tm_sec);
 
 	int ret = rtc_set_time(dev, &set_t);
 	if (ret != 0) {
@@ -25,8 +53,8 @@ static int cmd_g_arribada_rtc_set(const struct shell *shell, size_t argc, char *
 
 	struct rtc_time get_t;
 	rtc_get_time(dev, &get_t);
-	LOG_INF("Date/time is %d-%d-%d %d  %d:%d:%d\n", get_t.tm_year + 1900,
-		get_t.tm_mon + 1, get_t.tm_mday,get_t.tm_wday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
+	LOG_INF("Date/time is %d-%d-%d %d  %d:%d:%d\n", get_t.tm_year + 1900, get_t.tm_mon + 1,
+		get_t.tm_mday, get_t.tm_wday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
 
 	return 0;
 }
@@ -34,8 +62,8 @@ static int cmd_g_arribada_rtc_get(const struct shell *shell, size_t argc, char *
 {
 	struct rtc_time get_t;
 	rtc_get_time(dev, &get_t);
-	LOG_INF("Date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900,
-		get_t.tm_mon + 1, get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
+	LOG_INF("Date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900, get_t.tm_mon + 1,
+		get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
 
 	return 0;
 }
@@ -46,16 +74,18 @@ static int cmd_g_arribada_restart(const struct shell *shell, size_t argc, char *
 	return 0;
 }
 
-SHELL_STATIC_SUBCMD_SET_CREATE(g_arribada_cmds,
-			       SHELL_CMD_ARG(rtcset, NULL,
-					     "set RTC time\n $ arribada rtcset <epoch>\n",
-					     cmd_g_arribada_rtc_set, 2, 0),
-			       SHELL_CMD_ARG(rtcget, NULL, "get RTC time\n $ arribada rtcget \n",
-					     cmd_g_arribada_rtc_get, 1, 0),
-			       SHELL_CMD_ARG(restart, NULL,
-					     "start app again\n $ arribada  restart\n",
-					     cmd_g_arribada_restart, 1, 0),
-			       SHELL_SUBCMD_SET_END);
+SHELL_STATIC_SUBCMD_SET_CREATE(
+	g_arribada_cmds,
+	SHELL_CMD_ARG(rtcset, NULL, "set RTC time\n $ arribada rtcset <epoch>\n",
+		      cmd_g_arribada_rtc_set, 2, 0),
+	SHELL_CMD_ARG(rtcget, NULL, "get RTC time\n $ arribada rtcget \n", cmd_g_arribada_rtc_get,
+		      1, 0),
+	SHELL_CMD_ARG(rtcalarm, NULL, "set RTC alarm\n $ arribada rtcset <epoch> <alarm-id> \n",
+		      cmd_g_arribada_rtc_alarm, 3, 0),
+
+	SHELL_CMD_ARG(restart, NULL, "start app again\n $ arribada  restart\n",
+		      cmd_g_arribada_restart, 1, 0),
+	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(arribada, &g_arribada_cmds, "Manage RTC", NULL);
 
@@ -91,7 +121,8 @@ int main(void)
 	while (1) {
 		/* rtc_get_time(dev, &get_t); */
 		/* LOG_INF("Current date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900, */
-		/* 	get_t.tm_mon + 1, get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec); */
+		/* 	get_t.tm_mon + 1, get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
+		 */
 		k_msleep(2000);
 	}
 	return 0;

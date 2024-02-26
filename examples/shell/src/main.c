@@ -7,11 +7,13 @@
 #include <stdlib.h>
 #include <zephyr/sys/timeutil.h>
 
-LOG_MODULE_REGISTER(simple_app);
+LOG_MODULE_REGISTER(shell_app);
 const struct device *dev;
 
 static int cmd_g_arribada_rtc_alarm(const struct shell *shell, size_t argc, char *argv[])
 {
+	// TODO need to accept alarm mask as input
+	
 	int ret;
 	/* Print current time in RTC */
 	struct rtc_time get_t;
@@ -112,7 +114,7 @@ static const struct device *get_ds3231_device(void)
 
 int main(void)
 {
-	LOG_INF("Running DS3231 simple app on %s\n", CONFIG_BOARD);
+	LOG_INF("Running DS3231 shell app on %s\n", CONFIG_BOARD);
 	dev = get_ds3231_device();
 	if (dev == NULL) {
 		return 0;

@@ -23,9 +23,9 @@
 ## Flashing
 
 1. Go the app in `examples/simple`
-2. `make` to build the application
-3. `make flash` to flash the application
-3. `minicom` is configured as the default serial monitor in the Makefile. You can flash and monitor together using `make fm`
+2. To build the example, run `west build -b rpi_pico . -- -DOPENOCD=/usr/bin/openocd -DOPENOCD_DEFAULT_PATH=/usr/share/openocd/scripts -DRPI_PICO_DEBUG_ADAPTER=cmsis-dap`
+3. To flash use `west flash`
+4. Using a serial utility like `minicom` you can now check the logs. In case of the `examples/shell` app, you can use the same serial utility to interact with the application. Type `help` to get started.
 
 ## License
 

@@ -8,3 +8,4 @@
 build
 twister-out
 .west
+Makefile

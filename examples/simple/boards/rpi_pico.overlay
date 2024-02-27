@@ -1,17 +1,7 @@
-&pinctrl {
- i2c1_default: i2c1_default {
-		group1 {
-			pinmux = <I2C1_SDA_P2>, <I2C1_SCL_P3>;
-			input-enable;
-			input-schmitt-enable;
-		};
-	};
-};
-
-&i2c1{
+&i2c0{
 	clock-frequency = <I2C_BITRATE_FAST>;
 	status = "okay";
-	pinctrl-0 = <&i2c1_default>;
+	pinctrl-0 = <&i2c0_default>;
 	pinctrl-names = "default";
  ds3231:ds3231@68{
 		compatible = "analogdevices,ds3231";

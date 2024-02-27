@@ -9,8 +9,8 @@
 
 | Pico | Adafruit DS321 breakout |
 |------|:-----------------------:|
-| GP2  | SDA                     |
-| GP3  | SCL                     |
+| GP4  | SDA                     |
+| GP5  | SCL                     |
 | 3V3  | Vin                     |
 | GND  | GND                     |
 

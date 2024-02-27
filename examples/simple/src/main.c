@@ -49,10 +49,16 @@ int main(void)
 		LOG_INF("Error setting time!!");
 	}
 
-	struct rtc_time get_t;
-	rtc_get_time(dev, &get_t);
-	LOG_INF("Date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900, get_t.tm_mon + 1,
-		get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
+	k_msleep(2000);
 
+	struct rtc_time get_t;
+	ret = rtc_get_time(dev, &get_t);
+	if (ret != 0) {
+		LOG_INF("Error setting time!!");
+	}
+	else{
+		LOG_INF("Date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900, get_t.tm_mon + 1,
+			get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
+	}
 	return 0;
 }

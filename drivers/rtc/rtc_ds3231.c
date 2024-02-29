@@ -275,7 +275,7 @@ static int ds3231_alarm_get_time(const struct device *dev, uint16_t id, uint16_t
 {
 	int err;
 	uint8_t regs_0[4];
-	uint8_t regs_1[3];
+	/* uint8_t regs_1[3]; */
 	if (id == 0u) {
 		err = ds3231_read_regs(dev, DS3231_ALARM_1_SECONDS, &regs_0, sizeof(regs_0));
 		if (err != 0) {
@@ -289,9 +289,9 @@ static int ds3231_alarm_get_time(const struct device *dev, uint16_t id, uint16_t
 		timeptr->tm_hour =
 			bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_HOURS) + bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_10);
 		/* timeptr->tm_wday = bcd2bin(regs_0[3] & DS3231_DAYS_MASK); */
-		/* timeptr->tm_mday = bcd2bin(regs_0[3] & DS3231_DATE_MASK) + bcd2bin(regs_0[3] & DS3231_DATE_10); */
+		/* timeptr->tm_mday = bcd2bin(regs_0[3] & DS3231_DATE_MASK) + bcd2bin(regs_0[3] & DS3231_DATE_10); */		
 	}//endif id=0
-
+	LOG_INF("Alarm offsets are - ");
 	return 0;
 }
 
@@ -303,7 +303,10 @@ static int ds3231_alarm_is_pending(const struct device *dev, uint16_t id)
 static int ds3231_alarm_set_time(const struct device *dev, uint16_t id, uint16_t mask,
 				  const struct rtc_time *timeptr)
 {
-	uint8_t regs[4]; // We only need 3 for Alarm 2
+	uint8_t regs_0[4];
+	/* uint8_t regs_1[3]; // We only need 3 for Alarm 2 */
+	uint8_t reg_INT;
+	int ret;
 	LOG_INF("Mask is "PRINTF_BINARY_PATTERN_INT16,PRINTF_BYTE_TO_BINARY_INT16(mask));
 
 	if (id == 0U) {
@@ -315,17 +318,32 @@ static int ds3231_alarm_set_time(const struct device *dev, uint16_t id, uint16_t
 
 		// Check if second mask set
 		if ((mask & RTC_ALARM_TIME_MASK_SECOND) != 0U) {
-			regs[0] = (bin2bcd(timeptr->tm_sec / 10) << 4)+bin2bcd(timeptr->tm_sec % 10);
+			regs_0[0] = (bin2bcd(timeptr->tm_sec / 10) << 4)+bin2bcd(timeptr->tm_sec % 10);
 		} else {
-			regs[0] = DS3231_ALARM_1_SECONDS_A1M1;
+			regs_0[0] = DS3231_ALARM_1_SECONDS_A1M1;
 		}
 		if ((mask & RTC_ALARM_TIME_MASK_MINUTE) != 0U) {
-			regs[1] = bin2bcd(timeptr->tm_min) & DS3231_ALARM_1_MINUTES_MINUTES;
+			regs_0[1] = (bin2bcd(timeptr->tm_min / 10) << 4)+bin2bcd(timeptr->tm_min % 10);
 		} else {
-			regs[1] = DS3231_ALARM_1_MINUTES_A1M2;
+			regs_0[1] = DS3231_ALARM_1_MINUTES_A1M2;
 		}
-		LOG_INF(PRINTF_BINARY_PATTERN_INT8,PRINTF_BYTE_TO_BINARY_INT8(regs[0]));
-		LOG_INF(PRINTF_BINARY_PATTERN_INT8,PRINTF_BYTE_TO_BINARY_INT8(regs[1]));
+		if ((mask & RTC_ALARM_TIME_MASK_HOUR) != 0U) {
+			regs_0[2] = (bin2bcd(timeptr->tm_sec / 10) << 4)+bin2bcd(timeptr->tm_sec % 10);
+		} else {
+			regs_0[2] = DS3231_ALARM_1_HOURS_A1M3;
+		}
+
+		// TODO set day/date
+		LOG_INF(PRINTF_BINARY_PATTERN_INT8,PRINTF_BYTE_TO_BINARY_INT8(regs_0[0]));
+		LOG_INF(PRINTF_BINARY_PATTERN_INT8,PRINTF_BYTE_TO_BINARY_INT8(regs_0[1]));
+		LOG_INF(PRINTF_BINARY_PATTERN_INT8,PRINTF_BYTE_TO_BINARY_INT8(regs_0[2]));
+		ret = ds3231_write_regs(dev, DS3231_ALARM_1_SECONDS,regs_0, sizeof(regs_0));
+
+		// Write bits to enable interrupt generation on alarm 1 (A1E and INTCN)
+		reg_INT = DS3231_CONTROL_A1IE || DS3231_CONTROL_INTCN;
+		LOG_INF("Writing control byte -"PRINTF_BINARY_PATTERN_INT8,PRINTF_BYTE_TO_BINARY_INT8(reg_INT));
+		ret = ds3231_write_regs(dev, DS3231_CONTROL,&reg_INT,sizeof(reg_INT));
+
 		return 0;
 	}
 	else if (id == 1U){

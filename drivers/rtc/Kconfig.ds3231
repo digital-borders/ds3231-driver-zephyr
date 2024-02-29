@@ -1,7 +1,7 @@
 config RTC_DS3231
        bool "DS3231 RTC driver"
        default y
-       depends on DT_HAS_ANALOGDEVICES_DS3231_ENABLED
+       depends on DT_HAS_ADI_DS3231_ENABLED
        select I2C
 
 if RTC_ALARM || RTC_UPDATE

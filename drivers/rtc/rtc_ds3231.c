@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#define DT_DRV_COMPAT analogdevices_ds3231
+#define DT_DRV_COMPAT adi_ds3231
 
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/rtc.h>

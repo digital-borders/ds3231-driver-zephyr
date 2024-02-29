@@ -4,7 +4,7 @@
 	pinctrl-0 = <&i2c0_default>;
 	pinctrl-names = "default";
  ds3231:ds3231@68{
-		compatible = "analogdevices,ds3231";
+		compatible = "adi,ds3231";
 		status = "okay";
 		reg = <0x68>;
 	};

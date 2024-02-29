@@ -111,7 +111,7 @@ SHELL_CMD_REGISTER(arribada, &g_arribada_cmds, "Manage RTC", NULL);
 
 static const struct device *get_ds3231_device(void)
 {
-	const struct device *const dev = DEVICE_DT_GET_ANY(analogdevices_ds3231);
+	const struct device *const dev = DEVICE_DT_GET_ANY(adi_ds3231);
 
 	if (dev == NULL) {
 		/* No such node, or the node does not have status "okay". */

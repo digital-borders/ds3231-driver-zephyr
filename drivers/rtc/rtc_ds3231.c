@@ -11,19 +11,14 @@
 #include <zephyr/sys/util.h>
 
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
-#define PRINTF_BYTE_TO_BINARY_INT8(i)    \
-    (((i) & 0x80ll) ? '1' : '0'), \
-    (((i) & 0x40ll) ? '1' : '0'), \
-    (((i) & 0x20ll) ? '1' : '0'), \
-    (((i) & 0x10ll) ? '1' : '0'), \
-    (((i) & 0x08ll) ? '1' : '0'), \
-    (((i) & 0x04ll) ? '1' : '0'), \
-    (((i) & 0x02ll) ? '1' : '0'), \
-    (((i) & 0x01ll) ? '1' : '0')
-#define PRINTF_BINARY_PATTERN_INT16					\
-    PRINTF_BINARY_PATTERN_INT8              PRINTF_BINARY_PATTERN_INT8
-#define PRINTF_BYTE_TO_BINARY_INT16(i) \
-    PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
+#define PRINTF_BYTE_TO_BINARY_INT8(i)                                                              \
+	(((i) & 0x80ll) ? '1' : '0'), (((i) & 0x40ll) ? '1' : '0'), (((i) & 0x20ll) ? '1' : '0'),  \
+		(((i) & 0x10ll) ? '1' : '0'), (((i) & 0x08ll) ? '1' : '0'),                        \
+		(((i) & 0x04ll) ? '1' : '0'), (((i) & 0x02ll) ? '1' : '0'),                        \
+		(((i) & 0x01ll) ? '1' : '0')
+#define PRINTF_BINARY_PATTERN_INT16 PRINTF_BINARY_PATTERN_INT8 PRINTF_BINARY_PATTERN_INT8
+#define PRINTF_BYTE_TO_BINARY_INT16(i)                                                             \
+	PRINTF_BYTE_TO_BINARY_INT8((i) >> 8), PRINTF_BYTE_TO_BINARY_INT8(i)
 
 LOG_MODULE_REGISTER(ds3231, CONFIG_RTC_LOG_LEVEL);
 
@@ -135,6 +130,12 @@ LOG_MODULE_REGISTER(ds3231, CONFIG_RTC_LOG_LEVEL);
 
 /* The DS3231 only supports two-digit years, calculate offset to use */
 #define DS3231_YEARS_OFFSET (2000 - 1900)
+
+/* Macro for interrupt pin code */
+#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(int1_gpios) &&                                                \
+	(#defined(CONFIG_RTC_ALARM) || #defined(CONFIG_RTC_UPDATE))
+#define DS3231_INT1_GPIOS_IN_USE 1
+#endif
 
 struct ds3231_config {
 	const struct i2c_dt_spec i2c;
@@ -254,24 +255,24 @@ static int ds3231_get_time(const struct device *dev, struct rtc_time *timeptr)
 	return 0;
 }
 #ifdef CONFIG_RTC_ALARM
-static int ds3231_alarm_get_supported_fields(const struct device *dev, uint16_t id, uint16_t *mask) {
+static int ds3231_alarm_get_supported_fields(const struct device *dev, uint16_t id, uint16_t *mask)
+{
 
-	if(id == 0U) {
+	if (id == 0U) {
 		*mask = DS3231_RTC_ALARM_1_TIME_MASK;
-	}
-	else if (id == 1U){
+	} else if (id == 1U) {
 		*mask = DS3231_RTC_ALARM_2_TIME_MASK;
-	}
-	else {
-		LOG_ERR("invalid ID %d",id);
+	} else {
+		LOG_ERR("invalid ID %d", id);
 		return -EINVAL;
 	}
-	LOG_INF("Supported mask is "PRINTF_BINARY_PATTERN_INT16,PRINTF_BYTE_TO_BINARY_INT16(*mask));
+	LOG_INF("Supported mask is " PRINTF_BINARY_PATTERN_INT16,
+		PRINTF_BYTE_TO_BINARY_INT16(*mask));
 	return 0;
 }
 
 static int ds3231_alarm_get_time(const struct device *dev, uint16_t id, uint16_t *mask,
-				  struct rtc_time *timeptr)
+				 struct rtc_time *timeptr)
 {
 	int err;
 	uint8_t regs_0[4];
@@ -282,15 +283,16 @@ static int ds3231_alarm_get_time(const struct device *dev, uint16_t id, uint16_t
 			return err;
 		}
 		memset(timeptr, 0U, sizeof(*timeptr));
-		timeptr->tm_sec =
-			bcd2bin(regs_0[0] & DS3231_ALARM_1_SECONDS_SECONDS) + bcd2bin(regs_0[0] & DS3231_ALARM_1_SECONDS_10);
-		timeptr->tm_min =
-			bcd2bin(regs_0[1] & DS3231_ALARM_1_MINUTES_MINUTES) + bcd2bin(regs_0[1] & DS3231_ALARM_1_MINUTES_10);
-		timeptr->tm_hour =
-			bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_HOURS) + bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_10);
+		timeptr->tm_sec = bcd2bin(regs_0[0] & DS3231_ALARM_1_SECONDS_SECONDS) +
+				  bcd2bin(regs_0[0] & DS3231_ALARM_1_SECONDS_10);
+		timeptr->tm_min = bcd2bin(regs_0[1] & DS3231_ALARM_1_MINUTES_MINUTES) +
+				  bcd2bin(regs_0[1] & DS3231_ALARM_1_MINUTES_10);
+		timeptr->tm_hour = bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_HOURS) +
+				   bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_10);
 		/* timeptr->tm_wday = bcd2bin(regs_0[3] & DS3231_DAYS_MASK); */
-		/* timeptr->tm_mday = bcd2bin(regs_0[3] & DS3231_DATE_MASK) + bcd2bin(regs_0[3] & DS3231_DATE_10); */		
-	}//endif id=0
+		/* timeptr->tm_mday = bcd2bin(regs_0[3] & DS3231_DATE_MASK) + bcd2bin(regs_0[3] &
+		 * DS3231_DATE_10); */
+	} // endif id=0
 	LOG_INF("Alarm offsets are - ");
 	return 0;
 }
@@ -301,13 +303,13 @@ static int ds3231_alarm_is_pending(const struct device *dev, uint16_t id)
 }
 
 static int ds3231_alarm_set_time(const struct device *dev, uint16_t id, uint16_t mask,
-				  const struct rtc_time *timeptr)
+				 const struct rtc_time *timeptr)
 {
 	uint8_t regs_0[4];
 	/* uint8_t regs_1[3]; // We only need 3 for Alarm 2 */
 	uint8_t reg_INT;
 	int ret;
-	LOG_INF("Mask is "PRINTF_BINARY_PATTERN_INT16,PRINTF_BYTE_TO_BINARY_INT16(mask));
+	LOG_INF("Mask is " PRINTF_BINARY_PATTERN_INT16, PRINTF_BYTE_TO_BINARY_INT16(mask));
 
 	if (id == 0U) {
 
@@ -318,46 +320,47 @@ static int ds3231_alarm_set_time(const struct device *dev, uint16_t id, uint16_t
 
 		// Check if second mask set
 		if ((mask & RTC_ALARM_TIME_MASK_SECOND) != 0U) {
-			regs_0[0] = (bin2bcd(timeptr->tm_sec / 10) << 4)+bin2bcd(timeptr->tm_sec % 10);
+			regs_0[0] = (bin2bcd(timeptr->tm_sec / 10) << 4) +
+				    bin2bcd(timeptr->tm_sec % 10);
 		} else {
 			regs_0[0] = DS3231_ALARM_1_SECONDS_A1M1;
 		}
 		if ((mask & RTC_ALARM_TIME_MASK_MINUTE) != 0U) {
-			regs_0[1] = (bin2bcd(timeptr->tm_min / 10) << 4)+bin2bcd(timeptr->tm_min % 10);
+			regs_0[1] = (bin2bcd(timeptr->tm_min / 10) << 4) +
+				    bin2bcd(timeptr->tm_min % 10);
 		} else {
 			regs_0[1] = DS3231_ALARM_1_MINUTES_A1M2;
 		}
 		if ((mask & RTC_ALARM_TIME_MASK_HOUR) != 0U) {
-			regs_0[2] = (bin2bcd(timeptr->tm_sec / 10) << 4)+bin2bcd(timeptr->tm_sec % 10);
+			regs_0[2] = (bin2bcd(timeptr->tm_sec / 10) << 4) +
+				    bin2bcd(timeptr->tm_sec % 10);
 		} else {
 			regs_0[2] = DS3231_ALARM_1_HOURS_A1M3;
 		}
 
 		// TODO set day/date
-		LOG_INF(PRINTF_BINARY_PATTERN_INT8,PRINTF_BYTE_TO_BINARY_INT8(regs_0[0]));
-		LOG_INF(PRINTF_BINARY_PATTERN_INT8,PRINTF_BYTE_TO_BINARY_INT8(regs_0[1]));
-		LOG_INF(PRINTF_BINARY_PATTERN_INT8,PRINTF_BYTE_TO_BINARY_INT8(regs_0[2]));
-		ret = ds3231_write_regs(dev, DS3231_ALARM_1_SECONDS,regs_0, sizeof(regs_0));
+		LOG_INF(PRINTF_BINARY_PATTERN_INT8, PRINTF_BYTE_TO_BINARY_INT8(regs_0[0]));
+		LOG_INF(PRINTF_BINARY_PATTERN_INT8, PRINTF_BYTE_TO_BINARY_INT8(regs_0[1]));
+		LOG_INF(PRINTF_BINARY_PATTERN_INT8, PRINTF_BYTE_TO_BINARY_INT8(regs_0[2]));
+		ret = ds3231_write_regs(dev, DS3231_ALARM_1_SECONDS, regs_0, sizeof(regs_0));
 
 		// Write bits to enable interrupt generation on alarm 1 (A1E and INTCN)
 		reg_INT = DS3231_CONTROL_A1IE || DS3231_CONTROL_INTCN;
-		LOG_INF("Writing control byte -"PRINTF_BINARY_PATTERN_INT8,PRINTF_BYTE_TO_BINARY_INT8(reg_INT));
-		ret = ds3231_write_regs(dev, DS3231_CONTROL,&reg_INT,sizeof(reg_INT));
+		LOG_INF("Writing control byte -" PRINTF_BINARY_PATTERN_INT8,
+			PRINTF_BYTE_TO_BINARY_INT8(reg_INT));
+		ret = ds3231_write_regs(dev, DS3231_CONTROL, &reg_INT, sizeof(reg_INT));
 
 		return 0;
-	}
-	else if (id == 1U){
+	} else if (id == 1U) {
 		if ((mask & ~(DS3231_RTC_ALARM_2_TIME_MASK)) != 0U) {
 			LOG_ERR("unsupported alarm field mask 0x%04x", mask);
 			return -EINVAL;
 		}
 
 		return 0;
-	}
-	else {
+	} else {
 		LOG_ERR("invalid ID %d", id);
 		return -EINVAL;
-
 	}
 }
 

@@ -50,37 +50,37 @@ LOG_MODULE_REGISTER(ds3231, CONFIG_RTC_LOG_LEVEL);
 #define DS3231_ALARM_2_DAY_DATE 0x0dU
 
 /* Time and date register bits */
-#define DS3231_SECONDS_10              GENMASK(6, 4)
-#define DS3231_SECONDS_MASK            GENMASK(3, 0)
-#define DS3231_MINUTES_10              GENMASK(6, 4)
-#define DS3231_MINUTES_MASK            GENMASK(3, 0)
-#define DS3231_HOURS_12_24             BIT(6)
-#define DS3231_HOURS_AM_PM_20          BIT(5)
-#define DS3231_HOURS_10                BIT(4)
-#define DS3231_HOURS_MASK              GENMASK(3, 0)
-#define DS3231_DAYS_MASK               GENMASK(2, 0)
-#define DS3231_DATE_10                 GENMASK(5, 4)
-#define DS3231_DATE_MASK               GENMASK(3, 0)
-#define DS3231_MONTH_CENTURY           BIT(7)
-#define DS3231_MONTH_10                BIT(4)
-#define DS3231_MONTHS_MASK             GENMASK(3, 0)
-#define DS3231_YEAR_10                 GENMASK(7, 4)
-#define DS3231_YEARS_MASK              GENMASK(3, 0)
-#define DS3231_ALARM_1_SECONDS_A1M1    BIT(7)
-#define DS3231_ALARM_1_SECONDS_10      GENMASK(6, 4)
-#define DS3231_ALARM_1_SECONDS_SECONDS GENMASK(3, 0)
-#define DS3231_ALARM_1_MINUTES_A1M2    BIT(7)
-#define DS3231_ALARM_1_MINUTES_10      GENMASK(6, 4)
-#define DS3231_ALARM_1_MINUTES_MINUTES GENMASK(3, 0)
-#define DS3231_ALARM_1_HOURS_A1M3      BIT(7)
-#define DS3231_ALARM_1_HOURS_12_24     BIT(6)
-#define DS3231_ALARM_1_HOURS_AM_PM_20  BIT(5)
-#define DS3231_ALARM_1_HOURS_10        BIT(4)
-#define DS3231_ALARM_1_HOURS_HOURS     GENMASK(3, 0)
-#define DS3231_ALARM_1_DAY_DATE_A1M4   BIT(7)
-#define DS3231_ALARM_1_DAY_DATE_DYDT   BIT(6)
-#define DS3231_ALARM_1_DAY_DATE_10     GENMASK(5, 4)
-#define DS3231_ALARM_1_DAY_DATE_MASK   GENMASK(3, 0)
+#define DS3231_SECONDS_10                GENMASK(6, 4)
+#define DS3231_SECONDS_MASK              GENMASK(3, 0)
+#define DS3231_MINUTES_10                GENMASK(6, 4)
+#define DS3231_MINUTES_MASK              GENMASK(3, 0)
+#define DS3231_HOURS_12_24               BIT(6)
+#define DS3231_HOURS_AM_PM_20            BIT(5)
+#define DS3231_HOURS_10                  BIT(4)
+#define DS3231_HOURS_MASK                GENMASK(3, 0)
+#define DS3231_DAYS_MASK                 GENMASK(2, 0)
+#define DS3231_DATE_10                   GENMASK(5, 4)
+#define DS3231_DATE_MASK                 GENMASK(3, 0)
+#define DS3231_MONTH_CENTURY             BIT(7)
+#define DS3231_MONTH_10                  BIT(4)
+#define DS3231_MONTHS_MASK               GENMASK(3, 0)
+#define DS3231_YEAR_10                   GENMASK(7, 4)
+#define DS3231_YEARS_MASK                GENMASK(3, 0)
+#define DS3231_ALARM_1_SECONDS_A1M1      BIT(7)
+#define DS3231_ALARM_1_SECONDS_10        GENMASK(6, 4)
+#define DS3231_ALARM_1_SECONDS_SECONDS   GENMASK(3, 0)
+#define DS3231_ALARM_1_MINUTES_A1M2      BIT(7)
+#define DS3231_ALARM_1_MINUTES_10        GENMASK(6, 4)
+#define DS3231_ALARM_1_MINUTES_MINUTES   GENMASK(3, 0)
+#define DS3231_ALARM_1_HOURS_A1M3        BIT(7)
+#define DS3231_ALARM_1_HOURS_12_24       BIT(6)
+#define DS3231_ALARM_1_HOURS_AM_PM_20    BIT(5)
+#define DS3231_ALARM_1_HOURS_10          BIT(4)
+#define DS3231_ALARM_1_HOURS_HOURS       GENMASK(3, 0)
+#define DS3231_ALARM_1_DAY_DATE_A1M4     BIT(7)
+#define DS3231_ALARM_1_DAY_DATE_DYDT     BIT(6)
+#define DS3231_ALARM_1_DAY_DATE_10       GENMASK(5, 4)
+#define DS3231_ALARM_1_DAY_DATE_DAY_DATE GENMASK(3, 0)
 
 #define DS3231_ALARM_2_MINUTES_A2M2    BIT(7)
 #define DS3231_ALARM_2_MINUTES_10      GENMASK(6, 4)
@@ -288,12 +288,14 @@ static int ds3231_alarm_get_time(const struct device *dev, uint16_t id, uint16_t
 		timeptr->tm_min = bcd2bin(regs_0[1] & DS3231_ALARM_1_MINUTES_MINUTES) +
 				  bcd2bin(regs_0[1] & DS3231_ALARM_1_MINUTES_10);
 		timeptr->tm_hour = bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_HOURS) +
-				   bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_10);
-		/* timeptr->tm_wday = bcd2bin(regs_0[3] & DS3231_DAYS_MASK); */
-		/* timeptr->tm_mday = bcd2bin(regs_0[3] & DS3231_DATE_MASK) + bcd2bin(regs_0[3] &
-		 * DS3231_DATE_10); */
+				   bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_10) +
+				   bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_AM_PM_20);
+		timeptr->tm_mday = bcd2bin(regs_0[3] & DS3231_ALARM_1_DAY_DATE_DAY_DATE) +
+				   bcd2bin(regs_0[3] & DS3231_ALARM_1_DAY_DATE_10);
+		LOG_INF("Read mday reg as " PRINTF_BINARY_PATTERN_INT8,
+			PRINTF_BYTE_TO_BINARY_INT8(regs_0[3]));
 	} // endif id=0
-	LOG_INF("Alarm offsets are - ");
+
 	return 0;
 }
 
@@ -318,30 +320,37 @@ static int ds3231_alarm_set_time(const struct device *dev, uint16_t id, uint16_t
 			return -EINVAL;
 		}
 
-		// Check if second mask set
 		if ((mask & RTC_ALARM_TIME_MASK_SECOND) != 0U) {
 			regs_0[0] = (bin2bcd(timeptr->tm_sec / 10) << 4) +
 				    bin2bcd(timeptr->tm_sec % 10);
+
 		} else {
 			regs_0[0] = DS3231_ALARM_1_SECONDS_A1M1;
 		}
+
 		if ((mask & RTC_ALARM_TIME_MASK_MINUTE) != 0U) {
 			regs_0[1] = (bin2bcd(timeptr->tm_min / 10) << 4) +
 				    bin2bcd(timeptr->tm_min % 10);
 		} else {
 			regs_0[1] = DS3231_ALARM_1_MINUTES_A1M2;
 		}
+
 		if ((mask & RTC_ALARM_TIME_MASK_HOUR) != 0U) {
-			regs_0[2] = (bin2bcd(timeptr->tm_sec / 10) << 4) +
-				    bin2bcd(timeptr->tm_sec % 10);
+			regs_0[2] = (bin2bcd(timeptr->tm_hour / 10) << 4) +
+				    bin2bcd(timeptr->tm_hour % 10);
 		} else {
 			regs_0[2] = DS3231_ALARM_1_HOURS_A1M3;
 		}
 
-		// TODO set day/date
-		LOG_INF(PRINTF_BINARY_PATTERN_INT8, PRINTF_BYTE_TO_BINARY_INT8(regs_0[0]));
-		LOG_INF(PRINTF_BINARY_PATTERN_INT8, PRINTF_BYTE_TO_BINARY_INT8(regs_0[1]));
-		LOG_INF(PRINTF_BINARY_PATTERN_INT8, PRINTF_BYTE_TO_BINARY_INT8(regs_0[2]));
+		if ((mask & RTC_ALARM_TIME_MASK_MONTHDAY) != 0U) {
+			regs_0[3] = (bin2bcd(timeptr->tm_mday / 10) << 4) +
+				    bin2bcd(timeptr->tm_mday % 10);
+			LOG_INF("Setting mday reg as " PRINTF_BINARY_PATTERN_INT8,
+				PRINTF_BYTE_TO_BINARY_INT8(regs_0[3]));
+		} else {
+			regs_0[3] = DS3231_ALARM_1_DAY_DATE_A1M4;
+		}
+
 		ret = ds3231_write_regs(dev, DS3231_ALARM_1_SECONDS, regs_0, sizeof(regs_0));
 
 		// Write bits to enable interrupt generation on alarm 1 (A1E and INTCN)

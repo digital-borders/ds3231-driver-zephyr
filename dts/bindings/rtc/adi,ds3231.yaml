@@ -4,5 +4,11 @@ description: |
 compatible: "adi,ds3231"
 
 include:
-  - name: i2c-device.yaml
   - name: rtc-device.yaml
+  - name: i2c-device.yaml
+
+properties:
+  int1-gpios:
+    type: phandle-array
+    description: |
+      GPIO connected to the DS3231 INT1 interrupt output. This signal is open-drain, active low.

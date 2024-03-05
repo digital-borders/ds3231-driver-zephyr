@@ -13,6 +13,12 @@ const struct device *dev;
 static int cmd_g_arribada_rtc_alarm_set(const struct shell *shell, size_t argc, char *argv[])
 {
 	// TODO need to accept alarm mask as input
+	time_t timer_set = atoi(argv[2]);
+	struct rtc_time alarm_t;
+	gmtime_r(&timer_set, (struct tm *)(&alarm_t));
+	LOG_INF("Setting alarm for %d-%d-%d %d  %d:%d:%d\n", alarm_t.tm_year + 1900,
+		alarm_t.tm_mon + 1, alarm_t.tm_mday, alarm_t.tm_wday, alarm_t.tm_hour, alarm_t.tm_min,
+		alarm_t.tm_sec);
 
 	int ret, alarm_id;
 	/* Print current time in RTC */
@@ -21,17 +27,7 @@ static int cmd_g_arribada_rtc_alarm_set(const struct shell *shell, size_t argc, 
 	LOG_INF("Current date/time is %d-%d-%d   %d:%d:%d\n", get_t.tm_year + 1900,
 		get_t.tm_mon + 1, get_t.tm_mday, get_t.tm_hour, get_t.tm_min, get_t.tm_sec);
 
-	struct rtc_time alarm_t;
 	alarm_id = atoi(argv[1]);
-	alarm_t.tm_sec = atoi(argv[2]);
-	alarm_t.tm_min = atoi(argv[3]);
-	alarm_t.tm_hour = atoi(argv[4]);
-	alarm_t.tm_mday = atoi(argv[5]);
-
-	LOG_INF("Setting alarm for id=%d w/ seconds offset=%d | minutes offset=%d | hour offset=%d "
-		"|  date offset=%d",
-		alarm_id, alarm_t.tm_sec, alarm_t.tm_min, alarm_t.tm_hour, alarm_t.tm_mday);
-
 	uint16_t alarm_time_mask_supported, alarm_time_mask_set;
 	/* Get alarms supported fields */
 	ret = rtc_alarm_get_supported_fields(dev, alarm_id, &alarm_time_mask_supported);
@@ -43,9 +39,9 @@ static int cmd_g_arribada_rtc_alarm_set(const struct shell *shell, size_t argc, 
 static int cmd_g_arribada_rtc_alarm_get(const struct shell *shell, size_t argc, char *argv[])
 {
 	struct rtc_time get_t;
-	int ret = rtc_alarm_get_time(dev, atoi(argv[1]), 0, &get_t);
-	LOG_INF("Alarm set for %d days  %d:%d:%d from now\n", get_t.tm_mday, get_t.tm_hour,
-		get_t.tm_min, get_t.tm_sec);
+	rtc_alarm_get_time(dev, atoi(argv[1]), 0, &get_t);
+	LOG_INF("Alarm set for date %d  time%d:%d:%d from now\n", get_t.tm_mday, get_t.tm_hour,
+		get_t.tm_min, get_t.tm_sec);      
 	return 0;
 }
 static int cmd_g_arribada_rtc_set(const struct shell *shell, size_t argc, char *argv[])
@@ -94,7 +90,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	SHELL_CMD_ARG(rtcalarmset, NULL,
 		      "set RTC alarm\n $ arribada rtcalarmset <alarm-id> <seconds> <minutes> "
 		      "<hours> <day> <date> \n",
-		      cmd_g_arribada_rtc_alarm_set, 6, 0),
+		      cmd_g_arribada_rtc_alarm_set, 3, 0),
 	SHELL_CMD_ARG(rtcalarmget, NULL, "get RTC alarm\n $ arribada rtcalarmget <alarm-id> \n",
 		      cmd_g_arribada_rtc_alarm_get, 2, 0),
 	SHELL_CMD_ARG(restart, NULL, "start app again\n $ arribada  restart\n",

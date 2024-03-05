@@ -292,8 +292,6 @@ static int ds3231_alarm_get_time(const struct device *dev, uint16_t id, uint16_t
 				   bcd2bin(regs_0[2] & DS3231_ALARM_1_HOURS_AM_PM_20);
 		timeptr->tm_mday = bcd2bin(regs_0[3] & DS3231_ALARM_1_DAY_DATE_DAY_DATE) +
 				   bcd2bin(regs_0[3] & DS3231_ALARM_1_DAY_DATE_10);
-		LOG_INF("Read mday reg as " PRINTF_BINARY_PATTERN_INT8,
-			PRINTF_BYTE_TO_BINARY_INT8(regs_0[3]));
 	} // endif id=0
 
 	return 0;
@@ -345,8 +343,6 @@ static int ds3231_alarm_set_time(const struct device *dev, uint16_t id, uint16_t
 		if ((mask & RTC_ALARM_TIME_MASK_MONTHDAY) != 0U) {
 			regs_0[3] = (bin2bcd(timeptr->tm_mday / 10) << 4) +
 				    bin2bcd(timeptr->tm_mday % 10);
-			LOG_INF("Setting mday reg as " PRINTF_BINARY_PATTERN_INT8,
-				PRINTF_BYTE_TO_BINARY_INT8(regs_0[3]));
 		} else {
 			regs_0[3] = DS3231_ALARM_1_DAY_DATE_A1M4;
 		}
@@ -354,9 +350,7 @@ static int ds3231_alarm_set_time(const struct device *dev, uint16_t id, uint16_t
 		ret = ds3231_write_regs(dev, DS3231_ALARM_1_SECONDS, regs_0, sizeof(regs_0));
 
 		// Write bits to enable interrupt generation on alarm 1 (A1E and INTCN)
-		reg_INT = DS3231_CONTROL_A1IE || DS3231_CONTROL_INTCN;
-		LOG_INF("Writing control byte -" PRINTF_BINARY_PATTERN_INT8,
-			PRINTF_BYTE_TO_BINARY_INT8(reg_INT));
+		reg_INT = DS3231_CONTROL_A1IE + DS3231_CONTROL_INTCN;
 		ret = ds3231_write_regs(dev, DS3231_CONTROL, &reg_INT, sizeof(reg_INT));
 
 		return 0;

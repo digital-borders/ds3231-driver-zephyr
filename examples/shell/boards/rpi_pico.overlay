@@ -7,7 +7,7 @@
 		compatible = "adi,ds3231";
 		status = "okay";
 		reg = <0x68>;
-		int1-gpios = <&gpio0 6 GPIO_ACTIVE_LOW>;
+		int1-gpios = <&gpio0 6 (GPIO_ACTIVE_LOW)>;
 		alarms-count=<2>;
 	};
  };

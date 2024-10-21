@@ -214,7 +214,7 @@ static int ds3231_set_time(const struct device *dev, const struct rtc_time *time
 	raw_time[2] = (bin2bcd(timeptr->tm_hour / 10) << 4) + bin2bcd(timeptr->tm_hour % 10);
 	raw_time[3] = bin2bcd(timeptr->tm_wday);
 	raw_time[4] = (bin2bcd(timeptr->tm_mday / 10) << 4) + bin2bcd(timeptr->tm_mday % 10);
-	raw_time[5] = bin2bcd(timeptr->tm_mon + DS3231_MONTHS_OFFSET) & DS3231_MONTHS_MASK;
+	raw_time[5] = bin2bcd(timeptr->tm_mon + DS3231_MONTHS_OFFSET);
 	raw_time[6] = bin2bcd(timeptr->tm_year - DS3231_YEARS_OFFSET);
 
 	ret = ds3231_write_regs(dev, DS3231_SECONDS, raw_time, sizeof(raw_time));
